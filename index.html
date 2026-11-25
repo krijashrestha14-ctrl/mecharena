@@ -97,6 +97,13 @@
   <!-- MAIN CONTAINER -->
   <main class="max-w-6xl w-full mx-auto px-4 py-6 flex-1 flex flex-col justify-center">
 
+    <!-- WELCOME BANNER FOR KRIJAN -->
+    <div class="text-center pb-6 space-y-2">
+      <div class="inline-block px-4 py-1.5 rounded-full text-xs font-pixel bg-yellow-400/10 border-2 border-yellow-400 text-yellow-300 shadow-[0_0_15px_rgba(250,204,21,0.2)] animate-pulse">
+        ⭐ WELCOME TO THE ARENA, KRIJAN! ⭐
+      </div>
+    </div>
+
     <!-- SCREEN 1: STARTER SELECTION -->
     <section id="selectScreen" class="space-y-6">
       <div class="text-center space-y-2">
@@ -299,7 +306,7 @@
           <button onclick="closeGithubModal()" class="text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
         </div>
         <ol class="list-decimal list-inside space-y-2 text-slate-200 text-sm">
-          <li>Open your repository on <span class="text-yellow-400 font-bold">GitHub.com</span> (e.g. <code class="bg-slate-950 px-1.5 py-0.5 rounded text-red-300">mecharena</code> or a new <code class="bg-slate-950 px-1.5 py-0.5 rounded text-red-300">poke-arena</code> repo).</li>
+          <li>Open your repository on <span class="text-yellow-400 font-bold">GitHub.com</span> (e.g. <code class="bg-slate-950 px-1.5 py-0.5 rounded text-red-300">mecharena</code>).</li>
           <li>Replace or upload this file as <code class="bg-slate-950 px-1.5 py-0.5 rounded text-emerald-300">index.html</code>.</li>
           <li>Commit changes and refresh your GitHub Pages URL after 1 minute!</li>
         </ol>
@@ -316,7 +323,6 @@
   </footer>
 
   <script>
-    // --- ORIGINAL POKEMON-INSPIRED MONSTERS WITH CUSTOM SVG ART ---
     const MONSTERS = [
       {
         id: 'pyrotail',
@@ -332,23 +338,17 @@
         atkBonus: 4,
         desc: 'A fiery fox-lizard whose tail flame burns hotter when Trainer Krijan cheers.',
         svg: `<svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-[0_6px_12px_rgba(239,68,68,0.5)]">
-          <!-- Flame Tail -->
           <path d="M135,140 Q180,115 165,70 Q150,95 142,80 Q135,105 125,125 Z" fill="#f97316"/>
           <path d="M140,135 Q165,118 158,90 Q148,105 138,122 Z" fill="#facc15"/>
-          <!-- Body -->
           <ellipse cx="95" cy="128" rx="38" ry="42" fill="#ef4444"/>
           <ellipse cx="90" cy="132" rx="22" ry="28" fill="#fef08a"/>
-          <!-- Head -->
           <circle cx="95" cy="72" r="34" fill="#ef4444"/>
-          <!-- Ears -->
           <polygon points="68,48 58,18 85,40" fill="#dc2626"/>
           <polygon points="122,48 132,18 105,40" fill="#dc2626"/>
-          <!-- Eyes -->
           <circle cx="82" cy="68" r="6" fill="#0f172a"/>
           <circle cx="84" cy="66" r="2" fill="#ffffff"/>
           <circle cx="108" cy="68" r="6" fill="#0f172a"/>
           <circle cx="110" cy="66" r="2" fill="#ffffff"/>
-          <!-- Feet -->
           <ellipse cx="75" cy="170" rx="14" ry="8" fill="#b91c1c"/>
           <ellipse cx="115" cy="170" rx="14" ry="8" fill="#b91c1c"/>
         </svg>`
@@ -367,23 +367,16 @@
         atkBonus: 2,
         desc: 'An armored hydro-turtle capable of blasting pressurized tidal waves.',
         svg: `<svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-[0_6px_12px_rgba(56,189,248,0.5)]">
-          <!-- Shell -->
           <ellipse cx="108" cy="122" rx="44" ry="46" fill="#92400e" stroke="#facc15" stroke-width="5"/>
-          <!-- Wave Tail -->
           <path d="M148,135 Q185,125 175,95 Q160,115 145,120 Z" fill="#38bdf8"/>
-          <!-- Body Front -->
           <ellipse cx="86" cy="126" rx="32" ry="38" fill="#38bdf8"/>
           <ellipse cx="80" cy="128" rx="20" ry="26" fill="#fef9c3"/>
-          <!-- Head -->
           <circle cx="88" cy="68" r="32" fill="#38bdf8"/>
-          <!-- Eyes -->
           <circle cx="76" cy="64" r="6" fill="#0f172a"/>
           <circle cx="78" cy="62" r="2" fill="#ffffff"/>
           <circle cx="100" cy="64" r="6" fill="#0f172a"/>
           <circle cx="102" cy="62" r="2" fill="#ffffff"/>
-          <!-- Smile -->
           <path d="M80,80 Q88,88 96,80" stroke="#0f172a" stroke-width="3" fill="none" stroke-linecap="round"/>
-          <!-- Feet -->
           <ellipse cx="70" cy="168" rx="14" ry="8" fill="#0284c7"/>
           <ellipse cx="108" cy="168" rx="14" ry="8" fill="#0284c7"/>
         </svg>`
@@ -402,39 +395,30 @@
         atkBonus: 3,
         desc: 'A forest guardian carrying a glowing sun-blossom on its back.',
         svg: `<svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-[0_6px_12px_rgba(52,211,153,0.5)]">
-          <!-- Back Flower Bulb -->
           <ellipse cx="115" cy="82" rx="34" ry="28" fill="#16a34a"/>
           <polygon points="115,42 100,66 130,66" fill="#f43f5e"/>
-          <!-- Body -->
           <ellipse cx="95" cy="126" rx="44" ry="34" fill="#34d399"/>
-          <!-- Spots -->
           <circle cx="115" cy="118" r="6" fill="#059669"/>
           <circle cx="126" cy="134" r="5" fill="#059669"/>
-          <!-- Head -->
           <circle cx="72" cy="96" r="30" fill="#34d399"/>
-          <!-- Leaf Ears -->
           <polygon points="56,72 48,46 70,66" fill="#10b981"/>
           <polygon points="88,72 96,46 76,66" fill="#10b981"/>
-          <!-- Eyes -->
           <circle cx="62" cy="92" r="5.5" fill="#0f172a"/>
           <circle cx="64" cy="90" r="2" fill="#ffffff"/>
           <circle cx="84" cy="92" r="5.5" fill="#0f172a"/>
           <circle cx="86" cy="90" r="2" fill="#ffffff"/>
-          <!-- Legs -->
           <rect x="62" y="152" width="16" height="20" rx="6" fill="#059669"/>
           <rect x="108" y="152" width="16" height="20" rx="6" fill="#059669"/>
         </svg>`
       }
     ];
 
-    // --- GAME STATE ---
     let player = null;
     let enemy = null;
     let isPlayerTurn = true;
     let badgesWon = 0;
     let soundEnabled = true;
 
-    // --- RETRO SOUND EFFECTS (Tone.js) ---
     function playSound(type) {
       if (!soundEnabled || typeof Tone === 'undefined') return;
       if (Tone.context.state !== 'running') Tone.start();
@@ -473,7 +457,6 @@
       document.getElementById('soundLabel').textContent = soundEnabled ? 'SFX ON' : 'SFX OFF';
     }
 
-    // --- RENDER STARTER SELECTION ---
     function renderStarterSelect() {
       const grid = document.getElementById('starterGrid');
       grid.innerHTML = MONSTERS.map(mon => `
@@ -506,12 +489,10 @@
       `).join('');
     }
 
-    // --- START BATTLE ---
     function startBattle(monId) {
       const chosen = MONSTERS.find(m => m.id === monId);
       player = { ...chosen, hp: chosen.maxHp, en: chosen.maxEn };
 
-      // Pick random rival monster
       const foeBase = MONSTERS[Math.floor(Math.random() * MONSTERS.length)];
       const scaleHp = foeBase.maxHp + (badgesWon * 10);
       enemy = {
@@ -539,7 +520,6 @@
       eBadge.className = `text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${enemy.badgeStyle}`;
       document.getElementById('enemySprite').innerHTML = enemy.svg;
 
-      // Update Type Matchup Hint
       const hint = document.getElementById('matchupHint');
       if (player.strongAgainst === enemy.type) {
         hint.textContent = `🔥 Type Advantage! ${player.type} is Super Effective!`;
@@ -649,7 +629,6 @@
       return 1.0;
     }
 
-    // --- PLAYER TURN ---
     function playerAction(move) {
       if (!isPlayerTurn) return;
       isPlayerTurn = false;
@@ -699,7 +678,6 @@
       setTimeout(enemyTurn, 1050);
     }
 
-    // --- RIVAL AI TURN ---
     function enemyTurn() {
       let choice = 'tackle';
 
@@ -804,7 +782,6 @@
       document.getElementById('githubModal').classList.add('hidden');
     }
 
-    // Initialize on load
     renderStarterSelect();
   </script>
 </body>
