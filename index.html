@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MECH ARENA // Robot Fight</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background-color: #070b14;
+      background-image:
+        radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.15) 0%, transparent 60%),
+        linear-gradient(rgba(14, 165, 233, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(14, 165, 233, 0.05) 1px, transparent 1px);
+      background-size: 100% 100%, 40px 40px, 40px 40px;
+      color: #e2e8f0;
+      overflow-x: hidden;
+    }
+    .font-orbitron {
+      font-family: 'Orbitron', sans-serif;
+    }
+    .neon-cyan {
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.4), inset 0 0 10px rgba(6, 182, 212, 0.2);
+    }
+    .neon-pink {
+      box-shadow: 0 0 15px rgba(244, 63, 94, 0.4), inset 0 0 10px rgba(244, 63, 94, 0.2);
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+    .animate-float {
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-12px) rotate(-2deg); }
+      40% { transform: translateX(12px) rotate(2deg); }
+      60% { transform: translateX(-8px); }
+      80% { transform: translateX(8px); }
+    }
+    .animate-shake {
+      animation: shake 0.4s ease-in-out;
+    }
+    @keyframes lungeRight {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(60px) scale(1.05); }
+    }
+    .animate-lunge-right {
+      animation: lungeRight 0.35s ease-in-out;
+    }
+    @keyframes lungeLeft {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(-60px) scale(1.05); }
+    }
+    .animate-lunge-left {
+      animation: lungeLeft 0.35s ease-in-out;
+    }
+    @keyframes laserFlash {
+      0% { opacity: 0; transform: scaleY(0.2); }
+      30% { opacity: 1; transform: scaleY(1.4); }
+      100% { opacity: 0; transform: scaleY(0.1); }
+    }
+    .laser-beam {
+      animation: laserFlash 0.45s ease-out forwards;
+    }
+    /* Custom scrollbar for battle log */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #0284c7; border-radius: 3px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-slate-950">
+
+  <!-- HEADER -->
+  <header class="border-b border-cyan-500/30 bg-slate-950/80 backdrop-blur-md sticky top-0 z-30">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-3 h-3 rounded-full bg-cyan-400 animate-ping"></div>
+        <h1 class="font-orbitron text-xl md:text-2xl font-black tracking-wider bg-gradient-to-r from-cyan-400 via-sky-300 to-rose-500 bg-clip-text text-transparent">
+          MECH ARENA // ROBOT FIGHT
+        </h1>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="soundToggleBtn" onclick="toggleSound()" class="px-3 py-1.5 rounded border border-cyan-500/40 bg-slate-900 hover:bg-cyan-950/60 text-cyan-300 text-sm font-semibold transition flex items-center gap-1.5">
+          <span id="soundIcon">🔊</span> <span id="soundLabel">SFX ON</span>
+        </button>
+        <button onclick="openGithubModal()" class="px-3 py-1.5 rounded border border-rose-500/50 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 text-sm font-semibold transition">
+          🚀 Deploy on GitHub
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-6xl w-full mx-auto px-4 py-6 flex-1 flex flex-col justify-center">
+
+    <!-- SCREEN 1: MECH SELECTION -->
+    <section id="selectScreen" class="space-y-6">
+      <div class="text-center space-y-2">
+        <span class="inline-block px-3 py-0.5 rounded-full text-xs font-orbitron tracking-widest bg-cyan-500/10 border border-cyan-500/40 text-cyan-300">
+          COMBAT PROTOCOL v2.6
+        </span>
+        <h2 class="font-orbitron text-3xl md:text-4xl font-bold text-white">CHOOSE YOUR BATTLE MECH</h2>
+        <p class="text-slate-400 max-w-xl mx-auto text-lg">Select a chassis to enter the cyber-arena. Outsmart the rogue AI by balancing heavy attacks, energy reserves, and shield repairs.</p>
+      </div>
+
+      <div id="mechGrid" class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+    <!-- SCREEN 2: BATTLE ARENA -->
+    <section id="battleScreen" class="hidden space-y-5">
+      <!-- Top Score & Round Banner -->
+      <div class="flex items-center justify-between bg-slate-900/80 border border-slate-800 rounded-lg px-4 py-2">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-orbitron text-slate-400">WIN STREAK:</span>
+          <span id="winStreakDisplay" class="font-orbitron font-bold text-amber-400 text-lg">0</span>
+        </div>
+        <div id="turnIndicator" class="font-orbitron text-sm md:text-base font-bold tracking-wider text-cyan-400">
+          YOUR TURN — SELECT COMMAND
+        </div>
+        <button onclick="returnToSelect()" class="text-xs font-orbitron text-slate-400 hover:text-white underline">
+          CHANGE MECH
+        </button>
+      </div>
+
+      <!-- Fighters Stage -->
+      <div class="relative bg-slate-900/70 border border-cyan-500/30 rounded-2xl p-4 md:p-8 overflow-hidden neon-cyan">
+        <!-- Arena Floor Grid Effect -->
+        <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-cyan-500/10 to-transparent pointer-events-none"></div>
+
+        <!-- Laser Effect Layer -->
+        <div id="laserEffect" class="hidden absolute top-1/2 left-1/4 right-1/4 h-3 -translate-y-1/2 bg-gradient-to-r from-cyan-400 via-white to-rose-500 rounded-full shadow-[0_0_25px_#38bdf8] z-20 pointer-events-none"></div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center relative z-10">
+          <!-- PLAYER MECH -->
+          <div class="space-y-3">
+            <div class="flex justify-between items-end">
+              <div>
+                <span class="text-xs font-orbitron text-cyan-400 tracking-widest">PLAYER 01</span>
+                <h3 id="playerName" class="font-orbitron text-2xl font-bold text-white">CRUSHER-X</h3>
+              </div>
+              <span id="playerClassBadge" class="text-xs px-2 py-0.5 rounded bg-cyan-950 border border-cyan-500/40 text-cyan-300 font-semibold">HEAVY TANK</span>
+            </div>
+
+            <!-- HP Bar -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs font-bold">
+                <span class="text-emerald-400">HULL INTEGRITY (HP)</span>
+                <span id="playerHpText" class="text-white">120 / 120</span>
+              </div>
+              <div class="w-full h-3.5 bg-slate-950 rounded-full overflow-hidden border border-slate-700 p-0.5">
+                <div id="playerHpBar" class="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-full transition-all duration-300" style="width: 100%"></div>
+              </div>
+            </div>
+
+            <!-- Energy Bar -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs font-bold">
+                <span class="text-amber-400">REACTOR ENERGY (EN)</span>
+                <span id="playerEnText" class="text-white">100 / 100</span>
+              </div>
+              <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-700 p-0.5">
+                <div id="playerEnBar" class="h-full bg-gradient-to-r from-amber-500 to-yellow-300 rounded-full transition-all duration-300" style="width: 100%"></div>
+              </div>
+            </div>
+
+            <!-- Player Robot Visual -->
+            <div class="h-48 flex items-center justify-center relative">
+              <div id="playerSprite" class="w-40 h-40 animate-float transition-transform"></div>
+              <div id="playerDamagePopup" class="hidden absolute top-2 right-8 font-orbitron font-black text-2xl text-rose-500 drop-shadow-[0_2px_8px_rgba(244,63,94,0.9)]"></div>
+            </div>
+          </div>
+
+          <!-- ENEMY MECH -->
+          <div class="space-y-3">
+            <div class="flex justify-between items-end">
+              <div>
+                <span class="text-xs font-orbitron text-rose-400 tracking-widest">ROGUE AI</span>
+                <h3 id="enemyName" class="font-orbitron text-2xl font-bold text-white">VIPER-9</h3>
+              </div>
+              <span id="enemyClassBadge" class="text-xs px-2 py-0.5 rounded bg-rose-950 border border-rose-500/40 text-rose-300 font-semibold">ASSAULT BOT</span>
+            </div>
+
+            <!-- Enemy HP Bar -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs font-bold">
+                <span class="text-rose-400">HULL INTEGRITY (HP)</span>
+                <span id="enemyHpText" class="text-white">110 / 110</span>
+              </div>
+              <div class="w-full h-3.5 bg-slate-950 rounded-full overflow-hidden border border-slate-700 p-0.5">
+                <div id="enemyHpBar" class="h-full bg-gradient-to-r from-rose-600 to-orange-400 rounded-full transition-all duration-300" style="width: 100%"></div>
+              </div>
+            </div>
+
+            <!-- Enemy Energy Bar -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs font-bold">
+                <span class="text-amber-400">REACTOR ENERGY (EN)</span>
+                <span id="enemyEnText" class="text-white">100 / 100</span>
+              </div>
+              <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-700 p-0.5">
+                <div id="enemyEnBar" class="h-full bg-gradient-to-r from-amber-500 to-yellow-300 rounded-full transition-all duration-300" style="width: 100%"></div>
+              </div>
+            </div>
+
+            <!-- Enemy Robot Visual (Mirrored) -->
+            <div class="h-48 flex items-center justify-center relative">
+              <div id="enemySprite" class="w-40 h-40 animate-float scale-x-[-1] transition-transform"></div>
+              <div id="enemyDamagePopup" class="hidden absolute top-2 left-8 font-orbitron font-black text-2xl text-cyan-400 drop-shadow-[0_2px_8px_rgba(34,211,238,0.9)]"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls & Combat Log -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <!-- Action Buttons -->
+        <div class="lg:col-span-2 bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="font-orbitron text-sm font-bold text-slate-300 tracking-wider">TACTICAL COMMANDS</h4>
+            <span class="text-xs text-slate-400">Energy regenerates +10 each turn</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="actionButtons">
+            <button onclick="playerAction('slam')" class="action-btn group text-left p-3.5 rounded-lg border border-cyan-500/40 bg-slate-950 hover:bg-cyan-950/50 hover:border-cyan-400 transition disabled:opacity-40 disabled:pointer-events-none">
+              <div class="flex justify-between items-center font-orbitron font-bold text-cyan-300 group-hover:text-white">
+                <span>🔨 HYDRAULIC SLAM</span>
+                <span class="text-xs px-2 py-0.5 rounded bg-cyan-900/60 text-cyan-200">0 EN</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">Reliable kinetic strike. Deals <span class="text-white font-semibold">16–22 DMG</span>.</p>
+            </button>
+
+            <button onclick="playerAction('laser')" id="btnLaser" class="action-btn group text-left p-3.5 rounded-lg border border-rose-500/40 bg-slate-950 hover:bg-rose-950/50 hover:border-rose-400 transition disabled:opacity-40 disabled:pointer-events-none">
+              <div class="flex justify-between items-center font-orbitron font-bold text-rose-400 group-hover:text-white">
+                <span>⚡ PLASMA BEAM</span>
+                <span class="text-xs px-2 py-0.5 rounded bg-amber-900/60 text-amber-300">35 EN</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">High-energy thermal blast. Deals <span class="text-white font-semibold">30–40 DMG</span>.</p>
+            </button>
+
+            <button onclick="playerAction('repair')" id="btnRepair" class="action-btn group text-left p-3.5 rounded-lg border border-emerald-500/40 bg-slate-950 hover:bg-emerald-950/50 hover:border-emerald-400 transition disabled:opacity-40 disabled:pointer-events-none">
+              <div class="flex justify-between items-center font-orbitron font-bold text-emerald-400 group-hover:text-white">
+                <span>🛡️ NANO REPAIR</span>
+                <span class="text-xs px-2 py-0.5 rounded bg-amber-900/60 text-amber-300">25 EN</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">Deploy nanobots to restore <span class="text-white font-semibold">22–30 HP</span>.</p>
+            </button>
+
+            <button onclick="playerAction('overcharge')" class="action-btn group text-left p-3.5 rounded-lg border border-amber-500/40 bg-slate-950 hover:bg-amber-950/50 hover:border-amber-400 transition disabled:opacity-40 disabled:pointer-events-none">
+              <div class="flex justify-between items-center font-orbitron font-bold text-amber-400 group-hover:text-white">
+                <span>🔋 REACTOR SURGE</span>
+                <span class="text-xs px-2 py-0.5 rounded bg-emerald-900/60 text-emerald-300">+45 EN</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">Divert power to core. Restores <span class="text-white font-semibold">+45 Energy</span> immediately.</p>
+            </button>
+          </div>
+        </div>
+
+        <!-- Battle Log -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex flex-col h-64 lg:h-auto">
+          <h4 class="font-orbitron text-sm font-bold text-slate-300 tracking-wider mb-2">COMBAT TELEMETRY</h4>
+          <div id="battleLog" class="flex-1 overflow-y-auto space-y-2 text-sm pr-1 font-mono">
+            <div class="text-cyan-400">&gt; Arena systems initialized...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GAME OVER OVERLAY -->
+    <div id="gameOverModal" class="hidden fixed inset-0 z-40 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="max-w-md w-full bg-slate-900 border-2 border-cyan-500/50 rounded-2xl p-6 text-center space-y-5 neon-cyan">
+        <div id="gameOverIcon" class="text-5xl">🏆</div>
+        <h2 id="gameOverTitle" class="font-orbitron text-3xl font-black text-white">VICTORY!</h2>
+        <p id="gameOverSubtitle" class="text-slate-300">Enemy chassis neutralized. Arena supremacy secured.</p>
+        <div class="flex flex-col sm:flex-row gap-3 pt-2">
+          <button onclick="nextMatch()" class="flex-1 py-3 px-4 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-orbitron font-bold transition">
+            NEXT OPPONENT
+          </button>
+          <button onclick="returnToSelect()" class="flex-1 py-3 px-4 rounded-lg border border-slate-600 hover:border-white text-white font-orbitron font-bold transition">
+            CHANGE MECH
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GITHUB PAGES DEPLOY MODAL -->
+    <div id="githubModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="max-w-lg w-full bg-slate-900 border border-rose-500/50 rounded-2xl p-6 space-y-4 neon-pink">
+        <div class="flex justify-between items-center">
+          <h3 class="font-orbitron text-xl font-bold text-white">🚀 HOST ON GITHUB PAGES</h3>
+          <button onclick="closeGithubModal()" class="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
+        </div>
+        <ol class="list-decimal list-inside space-y-2 text-slate-300 text-sm">
+          <li>Create a new public repository on <span class="text-cyan-400 font-semibold">GitHub.com</span> (e.g. <code class="bg-slate-950 px-1.5 py-0.5 rounded text-rose-300">mech-arena</code>).</li>
+          <li>Upload this file named as <code class="bg-slate-950 px-1.5 py-0.5 rounded text-cyan-300">index.html</code> into the root folder.</li>
+          <li>Open repository <span class="text-white font-semibold">Settings &rarr; Pages</span>.</li>
+          <li>Under <span class="text-white font-semibold">Branch</span>, select <code class="bg-slate-950 px-1.5 py-0.5 rounded text-emerald-300">main</code> and click <span class="text-white font-semibold">Save</span>.</li>
+          <li>Your robot battle site will be live at <code class="text-amber-300">https://username.github.io/mech-arena/</code>!</li>
+        </ol>
+        <button onclick="closeGithubModal()" class="w-full py-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-orbitron font-bold text-sm transition">
+          GOT IT
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="border-t border-slate-800/80 py-3 text-center text-xs text-slate-500 font-orbitron">
+    MECH ARENA // BUILT FOR GITHUB PAGES &bull; ZERO DEPENDENCIES
+  </footer>
+
+  <script>
+    // --- ROBOT DEFINITIONS WITH CUSTOM SVG ART ---
+    const MECHS = [
+      {
+        id: 'crusher',
+        name: 'CRUSHER-X',
+        role: 'HEAVY ARMOR',
+        maxHp: 135,
+        maxEn: 90,
+        atkBonus: 2,
+        color: '#06b6d4',
+        desc: 'Reinforced titanium plating built to outlast heavy bombardment.',
+        svg: `<svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-[0_0_12px_rgba(6,182,212,0.6)]">
+          <rect x="55" y="20" width="90" height="45" rx="8" fill="#1e293b" stroke="#06b6d4" stroke-width="4"/>
+          <rect x="70" y="35" width="60" height="14" rx="4" fill="#06b6d4"/>
+          <rect x="40" y="72" width="120" height="75" rx="12" fill="#0f172a" stroke="#06b6d4" stroke-width="4"/>
+          <circle cx="100" cy="108" r="18" fill="#083344" stroke="#22d3ee" stroke-width="3"/>
+          <circle cx="100" cy="108" r="8" fill="#22d3ee"/>
+          <rect x="15" y="78" width="20" height="55" rx="6" fill="#334155" stroke="#06b6d4" stroke-width="3"/>
+          <rect x="165" y="78" width="20" height="55" rx="6" fill="#334155" stroke="#06b6d4" stroke-width="3"/>
+          <rect x="60" y="152" width="28" height="35" rx="4" fill="#1e293b" stroke="#06b6d4" stroke-width="3"/>
+          <rect x="112" y="152" width="28" height="35" rx="4" fill="#1e293b" stroke="#06b6d4" stroke-width="3"/>
+        </svg>`
+      },
+      {
+        id: 'volt',
+        name: 'VOLT-STRIKER',
+        role: 'PLASMA SNIPER',
+        maxHp: 105,
+        maxEn: 130,
+        atkBonus: 5,
+        color: '#f59e0b',
+        desc: 'Overclocked arc-reactor enables frequent Plasma Beam barrages.',
+        svg: `<svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-[0_0_12px_rgba(245,158,11,0.6)]">
+          <polygon points="100,10 135,55 65,55" fill="#1e293b" stroke="#f59e0b" stroke-width="4"/>
+          <circle cx="100" cy="40" r="9" fill="#fbbf24"/>
+          <polygon points="45,65 155,65 135,145 65,145" fill="#0f172a" stroke="#f59e0b" stroke-width="4"/>
+          <polygon points="100,80 115,105 95,105 108,130 85,102 103,102" fill="#fbbf24"/>
+          <rect x="18" y="70" width="18" height="62" rx="8" fill="#334155" stroke="#f59e0b" stroke-width="3"/>
+          <rect x="164" y="70" width="18" height="62" rx="8" fill="#334155" stroke="#f59e0b" stroke-width="3"/>
+          <rect x="68" y="148" width="22" height="40" rx="4" fill="#1e293b" stroke="#f59e0b" stroke-width="3"/>
+          <rect x="110" y="148" width="22" height="40" rx="4" fill="#1e293b" stroke="#f59e0b" stroke-width="3"/>
+        </svg>`
+      },
+      {
+        id: 'pyro',
+        name: 'PYRO-VIPER',
+        role: 'ASSAULT MECH',
+        maxHp: 118,
+        maxEn: 110,
+        atkBonus: 4,
+        color: '#f43f5e',
+        desc: 'Balanced offensive frame engineered for relentless aggression.',
+        svg: `<svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-[0_0_12px_rgba(244,63,94,0.6)]">
+          <rect x="62" y="18" width="76" height="42" rx="14" fill="#1e293b" stroke="#f43f5e" stroke-width="4"/>
+          <polygon points="72,34 95,42 72,46" fill="#fb7185"/>
+          <polygon points="128,34 105,42 128,46" fill="#fb7185"/>
+          <rect x="48" y="68" width="104" height="76" rx="16" fill="#0f172a" stroke="#f43f5e" stroke-width="4"/>
+          <rect x="76" y="88" width="48" height="32" rx="6" fill="#4c0519" stroke="#f43f5e" stroke-width="3"/>
+          <rect x="16" y="74" width="22" height="58" rx="8" fill="#334155" stroke="#f43f5e" stroke-width="3"/>
+          <rect x="162" y="74" width="22" height="58" rx="8" fill="#334155" stroke="#f43f5e" stroke-width="3"/>
+          <rect x="64" y="148" width="25" height="38" rx="5" fill="#1e293b" stroke="#f43f5e" stroke-width="3"/>
+          <rect x="111" y="148" width="25" height="38" rx="5" fill="#1e293b" stroke="#f43f5e" stroke-width="3"/>
+        </svg>`
+      }
+    ];
+
+    // --- GAME STATE ---
+    let player = null;
+    let enemy = null;
+    let isPlayerTurn = true;
+    let winStreak = 0;
+    let soundEnabled = true;
+
+    // --- SOUND SYNTHESIZER (Tone.js) ---
+    function playSound(type) {
+      if (!soundEnabled || typeof Tone === 'undefined') return;
+      if (Tone.context.state !== 'running') Tone.start();
+
+      const synth = new Tone.Synth().toDestination();
+      const now = Tone.now();
+
+      if (type === 'slam') {
+        const membrane = new Tone.MembraneSynth().toDestination();
+        membrane.triggerAttackRelease('C2', '8n', now);
+      } else if (type === 'laser') {
+        synth.oscillator.type = 'sawtooth';
+        synth.triggerAttackRelease('A5', '16n', now);
+        synth.frequency.exponentialRampToValueAtTime(110, now + 0.25);
+      } else if (type === 'repair') {
+        synth.oscillator.type = 'sine';
+        synth.triggerAttackRelease('E4', '16n', now);
+        synth.triggerAttackRelease('B4', '16n', now + 0.1);
+      } else if (type === 'surge') {
+        synth.oscillator.type = 'triangle';
+        synth.triggerAttackRelease('C4', '16n', now);
+        synth.triggerAttackRelease('G4', '16n', now + 0.08);
+        synth.triggerAttackRelease('C5', '16n', now + 0.16);
+      } else if (type === 'win') {
+        synth.triggerAttackRelease('C5', '8n', now);
+        synth.triggerAttackRelease('E5', '8n', now + 0.12);
+        synth.triggerAttackRelease('G5', '4n', now + 0.24);
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundIcon').textContent = soundEnabled ? '🔊' : '🔇';
+      document.getElementById('soundLabel').textContent = soundEnabled ? 'SFX ON' : 'SFX OFF';
+    }
+
+    // --- INITIALIZE MECH SELECTION CARDS ---
+    function renderMechSelect() {
+      const grid = document.getElementById('mechGrid');
+      grid.innerHTML = MECHS.map(mech => `
+        <div class="bg-slate-900/90 border border-slate-800 hover:border-cyan-400 rounded-2xl p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(6,182,212,0.25)]">
+          <div>
+            <div class="flex justify-between items-center mb-3">
+              <span class="text-xs font-orbitron px-2.5 py-1 rounded bg-slate-950 border border-slate-700 text-cyan-300">${mech.role}</span>
+              <span class="text-xs font-orbitron text-amber-400">+${mech.atkBonus} ATK</span>
+            </div>
+            <div class="h-40 flex items-center justify-center my-2">
+              <div class="w-36 h-36">${mech.svg}</div>
+            </div>
+            <h3 class="font-orbitron text-2xl font-bold text-white text-center mt-2">${mech.name}</h3>
+            <p class="text-slate-400 text-sm text-center mt-1">${mech.desc}</p>
+            <div class="grid grid-cols-2 gap-2 mt-4 bg-slate-950 p-3 rounded-lg border border-slate-800/80 text-center">
+              <div>
+                <div class="text-xs text-slate-400">HULL HP</div>
+                <div class="font-orbitron font-bold text-emerald-400 text-lg">${mech.maxHp}</div>
+              </div>
+              <div>
+                <div class="text-xs text-slate-400">ENERGY</div>
+                <div class="font-orbitron font-bold text-amber-400 text-lg">${mech.maxEn}</div>
+              </div>
+            </div>
+          </div>
+          <button onclick="startBattle('${mech.id}')" class="mt-5 w-full py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-sky-500 hover:from-cyan-400 hover:to-sky-400 text-slate-950 font-orbitron font-black tracking-wider transition">
+            DEPLOY MECH
+          </button>
+        </div>
+      `).join('');
+    }
+
+    // --- START / SETUP BATTLE ---
+    function startBattle(mechId) {
+      const chosen = MECHS.find(m => m.id === mechId);
+      player = { ...chosen, hp: chosen.maxHp, en: chosen.maxEn };
+
+      // Pick random enemy mech (different if possible)
+      const candidates = MECHS.filter(m => m.id !== mechId);
+      const foeBase = candidates[Math.floor(Math.random() * candidates.length)];
+      const scaleHp = foeBase.maxHp + (winStreak * 10);
+      enemy = {
+        ...foeBase,
+        name: `${foeBase.name} [MK-${winStreak + 1}]`,
+        maxHp: scaleHp,
+        hp: scaleHp,
+        en: foeBase.maxEn
+      };
+
+      document.getElementById('selectScreen').classList.add('hidden');
+      document.getElementById('gameOverModal').classList.add('hidden');
+      document.getElementById('battleScreen').classList.remove('hidden');
+
+      document.getElementById('playerName').textContent = player.name;
+      document.getElementById('playerClassBadge').textContent = player.role;
+      document.getElementById('playerSprite').innerHTML = player.svg;
+
+      document.getElementById('enemyName').textContent = enemy.name;
+      document.getElementById('enemyClassBadge').textContent = enemy.role;
+      document.getElementById('enemySprite').innerHTML = enemy.svg;
+
+      const log = document.getElementById('battleLog');
+      log.innerHTML = `<div class="text-cyan-400">&gt; ${player.name} entered the arena!</div>
+                       <div class="text-rose-400">&gt; Rogue AI ${enemy.name} engages!</div>`;
+
+      isPlayerTurn = true;
+      updateUI();
+    }
+
+    function updateUI() {
+      // Player Bars
+      const pHpPct = Math.max(0, (player.hp / player.maxHp) * 100);
+      const pEnPct = Math.max(0, (player.en / player.maxEn) * 100);
+      document.getElementById('playerHpBar').style.width = `${pHpPct}%`;
+      document.getElementById('playerHpText').textContent = `${Math.max(0, player.hp)} / ${player.maxHp}`;
+      document.getElementById('playerEnBar').style.width = `${pEnPct}%`;
+      document.getElementById('playerEnText').textContent = `${player.en} / ${player.maxEn}`;
+
+      // Enemy Bars
+      const eHpPct = Math.max(0, (enemy.hp / enemy.maxHp) * 100);
+      const eEnPct = Math.max(0, (enemy.en / enemy.maxEn) * 100);
+      document.getElementById('enemyHpBar').style.width = `${eHpPct}%`;
+      document.getElementById('enemyHpText').textContent = `${Math.max(0, enemy.hp)} / ${enemy.maxHp}`;
+      document.getElementById('enemyEnBar').style.width = `${eEnPct}%`;
+      document.getElementById('enemyEnText').textContent = `${enemy.en} / ${enemy.maxEn}`;
+
+      document.getElementById('winStreakDisplay').textContent = winStreak;
+
+      // Enable/Disable Action Buttons
+      const btns = document.querySelectorAll('.action-btn');
+      btns.forEach(b => b.disabled = !isPlayerTurn);
+
+      if (isPlayerTurn) {
+        document.getElementById('btnLaser').disabled = player.en < 35;
+        document.getElementById('btnRepair').disabled = player.en < 25 || player.hp >= player.maxHp;
+        document.getElementById('turnIndicator').textContent = 'YOUR TURN — SELECT COMMAND';
+        document.getElementById('turnIndicator').className = 'font-orbitron text-sm md:text-base font-bold tracking-wider text-cyan-400';
+      } else {
+        document.getElementById('turnIndicator').textContent = 'ENEMY AI COMPUTING MOVE...';
+        document.getElementById('turnIndicator').className = 'font-orbitron text-sm md:text-base font-bold tracking-wider text-rose-400 animate-pulse';
+      }
+    }
+
+    function addLog(msg, colorClass = 'text-slate-300') {
+      const log = document.getElementById('battleLog');
+      const line = document.createElement('div');
+      line.className = colorClass;
+      line.innerHTML = `&gt; ${msg}`;
+      log.appendChild(line);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function showPopup(target, text, isHeal = false) {
+      const el = document.getElementById(target === 'player' ? 'playerDamagePopup' : 'enemyDamagePopup');
+      el.textContent = text;
+      el.className = `absolute top-2 ${target === 'player' ? 'right-8' : 'left-8'} font-orbitron font-black text-2xl ${isHeal ? 'text-emerald-400' : 'text-amber-300'} drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] animate-bounce`;
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 900);
+    }
+
+    function triggerAnimation(attacker, type) {
+      const pSprite = document.getElementById('playerSprite');
+      const eSprite = document.getElementById('enemySprite');
+      const laser = document.getElementById('laserEffect');
+
+      if (type === 'laser') {
+        laser.classList.remove('hidden');
+        laser.classList.add('laser-beam');
+        setTimeout(() => {
+          laser.classList.add('hidden');
+          laser.classList.remove('laser-beam');
+        }, 450);
+      }
+
+      if (attacker === 'player' && (type === 'slam' || type === 'laser')) {
+        if (type === 'slam') pSprite.classList.add('animate-lunge-right');
+        eSprite.classList.add('animate-shake');
+        setTimeout(() => {
+          pSprite.classList.remove('animate-lunge-right');
+          eSprite.classList.remove('animate-shake');
+        }, 400);
+      } else if (attacker === 'enemy' && (type === 'slam' || type === 'laser')) {
+        if (type === 'slam') eSprite.classList.add('animate-lunge-left');
+        pSprite.classList.add('animate-shake');
+        setTimeout(() => {
+          eSprite.classList.remove('animate-lunge-left');
+          pSprite.classList.remove('animate-shake');
+        }, 400);
+      }
+    }
+
+    function randInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // --- PLAYER TURN ---
+    function playerAction(move) {
+      if (!isPlayerTurn) return;
+      isPlayerTurn = false;
+
+      if (move === 'slam') {
+        const dmg = randInt(16, 22) + player.atkBonus;
+        enemy.hp -= dmg;
+        playSound('slam');
+        triggerAnimation('player', 'slam');
+        showPopup('enemy', `-${dmg} HP`);
+        addLog(`${player.name} used Hydraulic Slam for <span class="text-white font-bold">${dmg} DMG</span>!`, 'text-cyan-300');
+      } else if (move === 'laser') {
+        if (player.en < 35) return;
+        player.en -= 35;
+        const dmg = randInt(30, 40) + player.atkBonus;
+        enemy.hp -= dmg;
+        playSound('laser');
+        triggerAnimation('player', 'laser');
+        showPopup('enemy', `-${dmg} HP`);
+        addLog(`${player.name} fired Plasma Beam for <span class="text-rose-400 font-bold">${dmg} DMG</span>!`, 'text-cyan-300');
+      } else if (move === 'repair') {
+        if (player.en < 25) return;
+        player.en -= 25;
+        const heal = randInt(22, 30);
+        player.hp = Math.min(player.maxHp, player.hp + heal);
+        playSound('repair');
+        showPopup('player', `+${heal} HP`, true);
+        addLog(`${player.name} activated Nano Repair (<span class="text-emerald-400 font-bold">+${heal} HP</span>).`, 'text-emerald-300');
+      } else if (move === 'overcharge') {
+        player.en = Math.min(player.maxEn, player.en + 45);
+        playSound('surge');
+        showPopup('player', `+45 EN`, true);
+        addLog(`${player.name} triggered Reactor Surge (<span class="text-amber-400 font-bold">+45 EN</span>).`, 'text-amber-300');
+      }
+
+      // Passive turn regen
+      player.en = Math.min(player.maxEn, player.en + 10);
+      updateUI();
+
+      if (checkBattleEnd()) return;
+
+      setTimeout(enemyTurn, 1000);
+    }
+
+    // --- ENEMY AI TURN ---
+    function enemyTurn() {
+      let choice = 'slam';
+
+      if (enemy.hp < enemy.maxHp * 0.35 && enemy.en >= 25 && Math.random() < 0.6) {
+        choice = 'repair';
+      } else if (enemy.en >= 35 && Math.random() < 0.65) {
+        choice = 'laser';
+      } else if (enemy.en < 25 && Math.random() < 0.5) {
+        choice = 'overcharge';
+      }
+
+      if (choice === 'slam') {
+        const dmg = randInt(14, 21) + enemy.atkBonus;
+        player.hp -= dmg;
+        playSound('slam');
+        triggerAnimation('enemy', 'slam');
+        showPopup('player', `-${dmg} HP`);
+        addLog(`${enemy.name} smashed you for <span class="text-rose-400 font-bold">${dmg} DMG</span>!`, 'text-rose-300');
+      } else if (choice === 'laser') {
+        enemy.en -= 35;
+        const dmg = randInt(28, 37) + enemy.atkBonus;
+        player.hp -= dmg;
+        playSound('laser');
+        triggerAnimation('enemy', 'laser');
+        showPopup('player', `-${dmg} HP`);
+        addLog(`${enemy.name} blasted you with Plasma Beam for <span class="text-rose-400 font-bold">${dmg} DMG</span>!`, 'text-rose-300');
+      } else if (choice === 'repair') {
+        enemy.en -= 25;
+        const heal = randInt(20, 28);
+        enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
+        playSound('repair');
+        showPopup('enemy', `+${heal} HP`, true);
+        addLog(`${enemy.name} repaired <span class="text-emerald-400 font-bold">+${heal} HP</span>.`, 'text-slate-300');
+      } else if (choice === 'overcharge') {
+        enemy.en = Math.min(enemy.maxEn, enemy.en + 45);
+        playSound('surge');
+        showPopup('enemy', `+45 EN`, true);
+        addLog(`${enemy.name} surged its reactor (<span class="text-amber-400 font-bold">+45 EN</span>).`, 'text-slate-300');
+      }
+
+      enemy.en = Math.min(enemy.maxEn, enemy.en + 10);
+
+      if (checkBattleEnd()) return;
+
+      isPlayerTurn = true;
+      updateUI();
+    }
+
+    function checkBattleEnd() {
+      if (enemy.hp <= 0) {
+        enemy.hp = 0;
+        winStreak++;
+        updateUI();
+        playSound('win');
+        addLog(`VICTORY! ${enemy.name} destroyed!`, 'text-amber-400 font-bold');
+        showGameOver(true);
+        return true;
+      }
+      if (player.hp <= 0) {
+        player.hp = 0;
+        winStreak = 0;
+        updateUI();
+        addLog(`DEFEAT! ${player.name} critical hull failure.`, 'text-rose-500 font-bold');
+        showGameOver(false);
+        return true;
+      }
+      return false;
+    }
+
+    function showGameOver(won) {
+      const modal = document.getElementById('gameOverModal');
+      document.getElementById('gameOverIcon').textContent = won ? '🏆' : '💥';
+      document.getElementById('gameOverTitle').textContent = won ? 'ARENA VICTORY!' : 'SYSTEM OFFLINE';
+      document.getElementById('gameOverTitle').className = `font-orbitron text-3xl font-black ${won ? 'text-cyan-400' : 'text-rose-500'}`;
+      document.getElementById('gameOverSubtitle').textContent = won
+        ? `Win Streak: ${winStreak}. Ready for a stronger challenger?`
+        : 'Your mech was dismantled. Reboot and try again!';
+      modal.classList.remove('hidden');
+    }
+
+    function nextMatch() {
+      startBattle(player.id);
+    }
+
+    function returnToSelect() {
+      document.getElementById('battleScreen').classList.add('hidden');
+      document.getElementById('gameOverModal').classList.add('hidden');
+      document.getElementById('selectScreen').classList.remove('hidden');
+    }
+
+    function openGithubModal() {
+      document.getElementById('githubModal').classList.remove('hidden');
+    }
+
+    function closeGithubModal() {
+      document.getElementById('githubModal').classList.add('hidden');
+    }
+
+    // Initialize on load
+    renderMechSelect();
+  </script>
+</body>
+</html>
